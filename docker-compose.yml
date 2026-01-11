@@ -33,7 +33,7 @@ services:
 
   # Backend API (FastAPI) - Imagen desde Docker Hub
   backend:
-    image: cmd69/expensivo-backend:1.1.0
+    image: cmd69/expense-backend:1.1.0
     container_name: expensivo_backend
     environment:
       # Database - Usa las mismas credenciales del superusuario de PostgreSQL
@@ -99,7 +99,7 @@ services:
 
   # Frontend (Next.js) - Imagen desde Docker Hub
   frontend:
-    image: cmd69/expensivo-frontend:1.1.0
+    image: cmd69/expense-frontend:1.1.0
     container_name: expensivo_frontend
     environment:
       # NEXT_PUBLIC_API_URL es opcional - el frontend auto-detecta la URL del backend
