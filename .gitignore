@@ -1,0 +1,33 @@
+# ============================================================================
+# .gitignore para Expensivo
+# ============================================================================
+
+# Archivo de variables de entorno (contiene información sensible)
+.env
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Volúmenes de Docker (si se montan localmente)
+data/
+*.db
+*.sqlite
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backup files
+*.bak
+*.backup
+
