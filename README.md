@@ -22,6 +22,17 @@
 </div>
 
 
+## 📑 Índice
+
+- [📖 Descripción del Proyecto](#-descripción-del-proyecto)
+- [⚡ Inicio Rápido](#-inicio-rápido)
+- [🏗️ Servicios Incluidos](#️-servicios-incluidos)
+- [⚙️ Configuración](#️-configuración)
+- [📚 Recursos](#-recursos)
+- [📄 Licencia](#-licencia)
+- [🤝 Contribuir](#-contribuir)
+
+
 ## 📖 Descripción del Proyecto
 
 **Expensivo** es una aplicación web completa para la gestión de gastos personales y financieros. Este repositorio contiene la configuración de Docker Compose lista para usar, utilizando imágenes pre-construidas desde Docker Hub.
@@ -242,7 +253,7 @@ CORS_ORIGINS=http://localhost:3030,https://tudominio.com
 
 ## 📄 Licencia
 
-Este repositorio contiene solo la configuración de despliegue. Consulta la licencia del proyecto Expensivo para más información.
+Este repositorio contiene solo la configuración de despliegue.
 
 ---
 
