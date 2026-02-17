@@ -139,15 +139,21 @@ nano .env  # o tu editor preferido
 ### 3️⃣ Iniciar los servicios
 
 ```bash
-# Iniciar todos los servicios en segundo plano
-docker compose up -d
+# Usar docker-compose.prod.yml (recomendado para producción, usa imágenes :latest)
+docker compose -f docker-compose.prod.yml up -d
+
+# O con Makefile
+make up
 
 # Ver los logs en tiempo real
-docker compose logs -f
+make logs
+# o: docker compose -f docker-compose.prod.yml logs -f
 
 # Verificar el estado
-docker compose ps
+docker compose -f docker-compose.prod.yml ps
 ```
+
+**Backup antes de actualizar**: Antes de cada deploy, ejecuta `make backup-db` para crear un backup de la base de datos en `backups/`.
 
 ### 4️⃣ Acceder a la aplicación
 

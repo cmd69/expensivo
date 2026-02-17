@@ -30,4 +30,5 @@ data/
 # Backup files
 *.bak
 *.backup
+backups/
 
