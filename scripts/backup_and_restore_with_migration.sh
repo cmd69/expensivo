@@ -19,11 +19,12 @@ echo "================================================"
 if [ -z "$1" ]; then
   echo -e "${RED}❌ Error: Debes proporcionar la ruta al archivo de backup${NC}"
   echo "   Uso: $0 <ruta/al/backup.dump>"
-  echo "   Ejemplo: $0 backups/expense_db_manual_20251214_175850.dump"
+  echo "   Ejemplo: $0 backups/expensivo_db_20251214_175850.dump"
   exit 1
 fi
 
 BACKUP_FILE=$1
+COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
 
 # Verificar que el archivo existe
 if [ ! -f "$BACKUP_FILE" ]; then
@@ -36,16 +37,16 @@ echo ""
 echo -e "${BLUE}📦 Paso 1: Estableciendo ruta de backup...${NC}"
 
 # Verificar que el contenedor está corriendo
-if ! docker compose ps postgres | grep -q "Up"; then
+if ! docker compose -f "$COMPOSE_FILE" ps postgres | grep -q "Up"; then
   echo -e "${RED}❌ Error: El contenedor de PostgreSQL no está corriendo${NC}"
-  echo "   Ejecuta: docker compose up -d postgres"
+  echo "   Ejecuta: docker compose -f $COMPOSE_FILE up -d postgres"
   exit 1
 fi
 
 # Obtener credenciales actuales
-DB_USER=$(docker compose exec -T postgres printenv POSTGRES_USER | tr -d '\r\n' || echo "expense_user")
-DB_NAME=$(docker compose exec -T postgres printenv POSTGRES_DB | tr -d '\r\n' || echo "expense_db")
-DB_PASSWORD=$(docker compose exec -T postgres printenv POSTGRES_PASSWORD | tr -d '\r\n' || echo "")
+DB_USER=$(docker compose -f "$COMPOSE_FILE" exec -T postgres printenv POSTGRES_USER | tr -d '\r\n' || echo "expensivo_user")
+DB_NAME=$(docker compose -f "$COMPOSE_FILE" exec -T postgres printenv POSTGRES_DB | tr -d '\r\n' || echo "expensivo_db")
+DB_PASSWORD=$(docker compose -f "$COMPOSE_FILE" exec -T postgres printenv POSTGRES_PASSWORD | tr -d '\r\n' || echo "")
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 echo "   Usuario actual: $DB_USER"
@@ -53,19 +54,35 @@ echo "   Base de datos: $DB_NAME"
 echo "   Ruta de backup: $BACKUP_FILE"
 echo "   Timestamp: $TIMESTAMP"
 
-# ===== PASO 2: DETECTAR USUARIO ANTIGUO DEL BACKUP =====
+# ===== PASO 2: BACKUP DE LA BASE DE DATOS ACTUAL =====
 echo ""
-echo -e "${BLUE}🔍 Paso 2: Detectando usuario antiguo del backup...${NC}"
+echo -e "${BLUE}💾 Paso 2: Creando backup de la base de datos actual (antes de restaurar)...${NC}"
+mkdir -p backups
+PRE_RESTORE_BACKUP="backups/${DB_NAME}_pre_restore_${TIMESTAMP}.dump"
+docker compose -f "$COMPOSE_FILE" exec -T postgres pg_dump -U "$DB_USER" -d "$DB_NAME" -F c -f /tmp/pre_restore.dump
+docker compose -f "$COMPOSE_FILE" cp postgres:/tmp/pre_restore.dump "$PRE_RESTORE_BACKUP"
+docker compose -f "$COMPOSE_FILE" exec -T postgres rm -f /tmp/pre_restore.dump
+if [ -f "$PRE_RESTORE_BACKUP" ]; then
+  PRE_SIZE=$(du -h "$PRE_RESTORE_BACKUP" | cut -f1)
+  echo -e "   ${GREEN}✅ Backup actual guardado: $PRE_RESTORE_BACKUP ($PRE_SIZE)${NC}"
+else
+  echo -e "${RED}❌ Error: No se pudo crear el backup de la base de datos actual${NC}"
+  exit 1
+fi
+
+# ===== PASO 3: DETECTAR USUARIO ANTIGUO DEL BACKUP =====
+echo ""
+echo -e "${BLUE}🔍 Paso 3: Detectando usuario antiguo del backup...${NC}"
 
 # Copiar backup al contenedor temporalmente para analizarlo
-docker compose cp "$BACKUP_FILE" postgres:/tmp/backup.dump
+docker compose -f "$COMPOSE_FILE" cp "$BACKUP_FILE" postgres:/tmp/backup.dump
 
 # Extraer el usuario antiguo del backup usando pg_restore --list
 # Buscamos líneas que contengan "OWNER TO" y extraemos el nombre del usuario
 OLD_USER=""
 if [[ "$BACKUP_FILE" == *.dump ]]; then
   # Para formato custom, usar pg_restore --list
-  OLD_USER=$(docker compose exec -T postgres pg_restore --list /tmp/backup.dump 2>/dev/null | \
+  OLD_USER=$(docker compose -f "$COMPOSE_FILE" exec -T postgres pg_restore --list /tmp/backup.dump 2>/dev/null | \
     grep -i "OWNER TO" | \
     head -1 | \
     sed -E "s/.*OWNER TO ([^;]+).*/\1/i" | \
@@ -76,7 +93,7 @@ if [[ "$BACKUP_FILE" == *.dump ]]; then
   if [ -z "$OLD_USER" ]; then
     echo "   Analizando contenido del backup..."
     # Intentar restaurar con --no-owner para ver qué usuario se menciona en los errores
-    ERROR_OUTPUT=$(docker compose exec -T postgres pg_restore \
+    ERROR_OUTPUT=$(docker compose -f "$COMPOSE_FILE" exec -T postgres pg_restore \
       -U "$DB_USER" \
       -d "$DB_NAME" \
       --no-owner \
@@ -92,7 +109,7 @@ if [[ "$BACKUP_FILE" == *.dump ]]; then
     
     # Si aún no encontramos, buscar en el contenido del dump directamente
     if [ -z "$OLD_USER" ]; then
-      OLD_USER=$(docker compose exec -T postgres strings /tmp/backup.dump 2>/dev/null | \
+      OLD_USER=$(docker compose -f "$COMPOSE_FILE" exec -T postgres strings /tmp/backup.dump 2>/dev/null | \
         grep -i "owner to" | \
         head -1 | \
         sed -E "s/.*[Oo][Ww][Nn][Ee][Rr] [Tt][Oo] ([a-zA-Z_][a-zA-Z0-9_]*).*/\1/i" | \
@@ -104,8 +121,8 @@ fi
 # Si no detectamos el usuario, usar expense_user como valor por defecto
 if [ -z "$OLD_USER" ]; then
   echo -e "${YELLOW}⚠️  No se pudo detectar automáticamente el usuario antiguo del backup${NC}"
-  echo -e "${YELLOW}   Usando 'expense_user' como usuario por defecto del backup${NC}"
-  OLD_USER="expense_user"
+  echo -e "${YELLOW}   Usando 'expensivo_user' como usuario por defecto del backup${NC}"
+  OLD_USER="expensivo_user"
 fi
 
 if [ -z "$OLD_USER" ]; then
@@ -120,19 +137,19 @@ else
   MIGRATE_USER=true
 fi
 
-# ===== PASO 3: CREAR USUARIO ANTIGUO SI NO EXISTE =====
+# ===== PASO 4: CREAR USUARIO ANTIGUO SI NO EXISTE =====
 if [ "$MIGRATE_USER" = true ]; then
   echo ""
-  echo -e "${BLUE}👤 Paso 3: Preparando usuario antiguo...${NC}"
+  echo -e "${BLUE}👤 Paso 4: Preparando usuario antiguo...${NC}"
   
   # Verificar si el usuario antiguo existe
-  USER_EXISTS=$(docker compose exec -T postgres psql -U "$DB_USER" -d postgres -t -c \
+  USER_EXISTS=$(docker compose -f "$COMPOSE_FILE" exec -T postgres psql -U "$DB_USER" -d postgres -t -c \
     "SELECT 1 FROM pg_roles WHERE rolname = '$OLD_USER';" | tr -d ' ' || echo "0")
   
   if [ "$USER_EXISTS" != "1" ]; then
     echo "   Creando usuario temporal: $OLD_USER"
     # Crear el usuario con permisos mínimos (solo para poder restaurar)
-    docker compose exec -T postgres psql -U "$DB_USER" -d postgres -c \
+    docker compose -f "$COMPOSE_FILE" exec -T postgres psql -U "$DB_USER" -d postgres -c \
       "CREATE ROLE \"$OLD_USER\" WITH LOGIN;" || {
       echo -e "${YELLOW}⚠️  No se pudo crear el usuario. Intentando continuar...${NC}"
     }
@@ -142,9 +159,9 @@ if [ "$MIGRATE_USER" = true ]; then
   fi
 fi
 
-# ===== PASO 4: RESTAURAR BACKUP =====
+# ===== PASO 5: RESTAURAR BACKUP =====
 echo ""
-echo -e "${BLUE}📥 Paso 4: Restaurando backup...${NC}"
+echo -e "${BLUE}📥 Paso 5: Restaurando backup...${NC}"
 
 # Verificar si el backup es formato custom (.dump) o SQL (.sql)
 if [[ "$BACKUP_FILE" == *.dump ]]; then
@@ -154,7 +171,7 @@ if [[ "$BACKUP_FILE" == *.dump ]]; then
   if [ "$MIGRATE_USER" = true ]; then
     echo "   Restaurando con --no-owner (se migrará ownership después)..."
     # Restaurar con --no-owner para evitar problemas de permisos, luego migraremos el ownership
-    docker compose exec -T postgres pg_restore \
+    docker compose -f "$COMPOSE_FILE" exec -T postgres pg_restore \
       -U "$DB_USER" \
       -d "$DB_NAME" \
       --clean \
@@ -167,7 +184,7 @@ if [[ "$BACKUP_FILE" == *.dump ]]; then
       }
   else
     echo "   Restaurando sin migración de usuario..."
-    docker compose exec -T postgres pg_restore \
+    docker compose -f "$COMPOSE_FILE" exec -T postgres pg_restore \
       -U "$DB_USER" \
       -d "$DB_NAME" \
       --clean \
@@ -182,7 +199,7 @@ if [[ "$BACKUP_FILE" == *.dump ]]; then
 else
   # Formato SQL: usar psql
   echo "   Formato detectado: SQL (.sql)"
-  docker compose exec -T postgres psql \
+  docker compose -f "$COMPOSE_FILE" exec -T postgres psql \
     -U "$DB_USER" \
     -d "$DB_NAME" \
     --single-transaction \
@@ -191,26 +208,26 @@ fi
 
 echo -e "${GREEN}✅ Backup restaurado${NC}"
 
-# ===== PASO 5: MIGRAR OWNERSHIP AL USUARIO NUEVO =====
+# ===== PASO 6: MIGRAR OWNERSHIP AL USUARIO NUEVO =====
 if [ "$MIGRATE_USER" = true ]; then
   echo ""
-  echo -e "${BLUE}🔄 Paso 5: Migrando ownership de $OLD_USER a $DB_USER...${NC}"
+  echo -e "${BLUE}🔄 Paso 6: Migrando ownership de $OLD_USER a $DB_USER...${NC}"
   
   # Cambiar ownership de la base de datos
   echo "   Cambiando ownership de la base de datos..."
-  docker compose exec -T postgres psql -U "$DB_USER" -d postgres -c \
+  docker compose -f "$COMPOSE_FILE" exec -T postgres psql -U "$DB_USER" -d postgres -c \
     "ALTER DATABASE \"$DB_NAME\" OWNER TO \"$DB_USER\";" 2>/dev/null || true
   
   # Cambiar ownership del esquema public
   echo "   Cambiando ownership del esquema public..."
-  docker compose exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" -c \
+  docker compose -f "$COMPOSE_FILE" exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" -c \
     "ALTER SCHEMA public OWNER TO \"$DB_USER\";" 2>/dev/null || true
   
   # Migración masiva de ownership usando un bloque DO
   echo "   Aplicando migración masiva de ownership..."
   # Usar un heredoc con comillas simples para evitar expansión de variables problemática
   # y usar current_user que será el usuario que ejecuta (DB_USER)
-  docker compose exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" <<'SQL_EOF'
+  docker compose -f "$COMPOSE_FILE" exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" <<'SQL_EOF'
 -- Cambiar ownership de todos los objetos
 DO $$
 DECLARE
@@ -280,7 +297,7 @@ SQL_EOF
   echo
   if [[ $REPLY =~ ^[SsYy]$ ]]; then
     echo "   Eliminando usuario $OLD_USER..."
-    docker compose exec -T postgres psql -U "$DB_USER" -d postgres -c \
+    docker compose -f "$COMPOSE_FILE" exec -T postgres psql -U "$DB_USER" -d postgres -c \
       "DROP ROLE IF EXISTS \"$OLD_USER\";" 2>/dev/null || true
     echo -e "${GREEN}✅ Usuario $OLD_USER eliminado${NC}"
   else
@@ -289,20 +306,20 @@ SQL_EOF
 fi
 
 # Limpiar archivo temporal
-docker compose exec -T postgres rm -f /tmp/backup.dump
+docker compose -f "$COMPOSE_FILE" exec -T postgres rm -f /tmp/backup.dump
 
-# ===== PASO 6: VERIFICAR RESTAURACIÓN =====
+# ===== PASO 7: VERIFICAR RESTAURACIÓN =====
 echo ""
-echo -e "${BLUE}🔍 Paso 6: Verificando restauración...${NC}"
+echo -e "${BLUE}🔍 Paso 7: Verificando restauración...${NC}"
 
-TABLE_COUNT=$(docker compose exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" -t -c \
+TABLE_COUNT=$(docker compose -f "$COMPOSE_FILE" exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" -t -c \
   "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" | tr -d ' ')
 
 echo "   Tablas encontradas: $TABLE_COUNT"
 
 # Verificar ownership de las tablas
 if [ "$MIGRATE_USER" = true ]; then
-  TABLES_WITH_OLD_USER=$(docker compose exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" -t -c \
+  TABLES_WITH_OLD_USER=$(docker compose -f "$COMPOSE_FILE" exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" -t -c \
     "SELECT COUNT(*) FROM pg_tables WHERE schemaname = 'public' AND tableowner = '$OLD_USER';" | tr -d ' ' || echo "0")
   
   if [ "$TABLES_WITH_OLD_USER" = "0" ]; then
@@ -325,6 +342,7 @@ echo -e "${GREEN}✅ Proceso completado exitosamente${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
 echo ""
 echo "📝 Resumen:"
+echo "   ✅ Backup de la BD actual (pre-restore): $PRE_RESTORE_BACKUP"
 echo "   ✅ Backup restaurado: $BACKUP_FILE"
 echo "   ✅ Usuario: $DB_USER"
 echo "   ✅ Base de datos: $DB_NAME"
@@ -335,11 +353,11 @@ fi
 echo ""
 echo "🔧 Próximos pasos:"
 echo "   1. Verifica las tablas:"
-echo "      docker compose exec postgres psql -U $DB_USER -d $DB_NAME -c '\\dt'"
+echo "      docker compose -f $COMPOSE_FILE exec postgres psql -U $DB_USER -d $DB_NAME -c '\\dt'"
 echo "   2. Verifica el ownership:"
-echo "      docker compose exec postgres psql -U $DB_USER -d $DB_NAME -c 'SELECT tablename, tableowner FROM pg_tables WHERE schemaname = '\''public'\'';'"
+echo "      docker compose -f $COMPOSE_FILE exec postgres psql -U $DB_USER -d $DB_NAME -c 'SELECT tablename, tableowner FROM pg_tables WHERE schemaname = '\''public'\'';'"
 echo "   3. Reinicia el backend para aplicar cambios:"
-echo "      docker compose restart backend"
+echo "      docker compose -f $COMPOSE_FILE restart backend"
 echo "   4. Verifica las migraciones:"
-echo "      docker compose exec backend alembic current"
+echo "      docker compose -f $COMPOSE_FILE exec backend alembic current"
 echo ""

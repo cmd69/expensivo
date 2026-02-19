@@ -9,7 +9,7 @@
 
 set -e
 
-COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
+COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
 
 if [ ! -f "$COMPOSE_FILE" ]; then
   echo "Error: No se encuentra $COMPOSE_FILE. Ejecuta desde la raíz del proyecto (ej. ~/docker/expensivo)."

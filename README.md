@@ -18,6 +18,8 @@
 <div align="center">
 
 ## ⚠️ **ADVERTENCIA: APLICACIÓN BAJO DESARROLLO** ⚠️
+### **¡Importante! Antes de cualquier cambio, realiza un respaldo de tus datos.**  
+Puedes utilizar el comando `make backup` para crear una copia de seguridad rápida y sencilla.
 
 </div>
 
@@ -40,71 +42,69 @@
 ### ✨ Características Principales
 
 - 💰 **Gestión de gastos e ingresos** - Registra y categoriza tus transacciones
-- 📊 **Dashboard interactivo** - Visualiza tus finanzas con gráficos y estadísticas
+- 📊 **Panel de control** - Visualiza tus finanzas con gráficos y estadísticas
 - 🏦 **Múltiples cuentas bancarias** - Gestiona varias cuentas desde un solo lugar
 - 📈 **Seguimiento de inversiones** - Controla tus activos y carteras
 - 👤 **Gestión de usuarios** - Sistema de autenticación y roles
 
 ### 🖼️ Capturas de Pantalla
 
-#### 1. 📊 Dashboard
+#### 1. 📊 Panel de control
 
-![Dashboard](assets/Dashboard.png)
+![Panel de control](assets/1.Dashboard.png)
 
-El **Dashboard** es tu centro de control financiero. Aquí puedes ver:
-- 💰 **Resumen financiero** - Balance total, ingresos y gastos del mes
-- 📈 **Gráficos interactivos** - Visualización de tus gastos por categoría
-- 📅 **Actividad reciente** - Últimas transacciones registradas
-- 🎯 **Vista rápida** - Acceso rápido a las secciones principales
-
----
-
-#### 2. 📋 Summary (Resumen)
-
-![Summary](assets/Summary.png)
-
-La vista de **Summary** te ofrece un análisis detallado de tus finanzas:
-- 📊 **Estadísticas mensuales** - Comparación de ingresos vs gastos
-- 🏷️ **Gastos por categoría** - Desglose visual de dónde va tu dinero
-- 📈 **Tendencias** - Evolución de tus finanzas a lo largo del tiempo
-- 💡 **Insights** - Información útil para mejorar tu gestión financiera
+El **panel de control** es tu centro financiero. Aquí puedes encontrar:
+- 📂 **Resumen financiero** – Visualiza tu balance total y el desglose por categorías.
+- 📊 **Estadísticas generales** – Consulta gastos e ingresos de los últimos 6 meses de forma visual.
+- 🏦 **Cuentas bancarias** – Consulta el saldo de cada cuenta; actualízalo cuando lo necesites.
+- 💼 **Cuentas de inversión** – Acceso directo a las secciones clave para gestionar inversiones.
+- 🔄 **Movimientos entre cuentas** – Registra transferencias y movimientos de saldo hacia cuentas de inversión.
 
 ---
 
-#### 3. 📅 Month View (Vista Mensual)
+#### 2. 📋 Análisis de gastos
 
-![Month View](assets/Monthview.png)
+![Análisis de gastos](assets/2.Summary.png)
 
-La **Vista Mensual** te permite ver todas tus transacciones organizadas por mes:
-- 📆 **Calendario de transacciones** - Visualización día a día
-- 🔍 **Filtros avanzados** - Busca por categoría, tipo o rango de fechas
-- ➕ **Añadir transacciones** - Registra nuevos gastos o ingresos rápidamente
-- 📝 **Edición rápida** - Modifica o elimina transacciones con un clic
+En **Análisis de gastos** ves el resumen del periodo elegido: totales, comparativa ingresos vs gastos y acceso a gráficos por categoría y tendencias.
 
----
+*Continuación de la misma página (al hacer scroll):*
 
-#### 4. 💼 Investments (Inversiones)
+![Análisis de gastos – Insights](assets/3.1SummaryInsights.png)
 
-![Investments](assets/Investments.png)
-
-La sección de **Inversiones** te ayuda a gestionar tu cartera:
-- 💎 **Carteras de inversión** - Organiza tus activos en diferentes carteras
-- 📊 **Seguimiento de activos** - Monitorea acciones, fondos y otros instrumentos
-- 💰 **Balance de cartera** - Visualiza el valor total de tus inversiones
-- 📈 **Rendimiento** - Analiza las ganancias y pérdidas de tus activos
+Más abajo en la misma página, la zona de **análisis detallado** muestra la evolución de gastos e ingresos, el desglose por categorías y datos útiles para tu gestión financiera.
 
 ---
 
-#### 5. ⚙️ Settings (Ajustes)
+#### 3. 📅 Vista mensual
 
-![Settings](assets/Settings.png)
+![Vista mensual](assets/3.Monthview.png)
 
-En **Ajustes** puedes personalizar tu experiencia:
-- 👤 **Perfil de usuario** - Gestiona tu información personal
-- 🏷️ **Categorías** - Crea y organiza tus categorías de gastos
-- 🏦 **Cuentas bancarias** - Administra tus cuentas y balances
-- 📤 **Importar datos** - Importa transacciones desde Excel o CSV
-- 🔐 **Seguridad** - Cambia tu contraseña y configuración de seguridad
+En **Vista mensual** tienes todas las transacciones del mes en formato calendario: listado por días, filtros por categoría o tipo y opción de añadir o editar movimientos desde la misma vista.
+
+---
+
+#### 4. 💼 Inversiones
+
+![Inversiones](assets/4.Investments.png)
+
+En **Inversiones** gestionas carteras y activos: balance por cartera, listado de posiciones (acciones, fondos, etc.) y visión del rendimiento de tus inversiones.
+
+*Detalle de una cartera:*
+
+![Inversiones – Cartera](assets/4.1.InvestmentsWallet.png)
+
+*Detalle de un activo:*
+
+![Inversiones – Activo](assets/4.2.InvestmentsAsset.png)
+
+---
+
+#### 5. ⚙️ Ajustes
+
+![Ajustes](assets/5.Settings.png)
+
+En **Ajustes** configuras perfil, categorías de gastos, cuentas bancarias, importación de datos (Excel/CSV) y opciones de seguridad (contraseña, etc.).
 
 ---
 
@@ -139,18 +139,16 @@ nano .env  # o tu editor preferido
 ### 3️⃣ Iniciar los servicios
 
 ```bash
-# Usar docker-compose.prod.yml (recomendado para producción, usa imágenes :latest)
-docker compose -f docker-compose.prod.yml up -d
+docker compose up -d
 
 # O con Makefile
 make up
 
 # Ver los logs en tiempo real
 make logs
-# o: docker compose -f docker-compose.prod.yml logs -f
 
 # Verificar el estado
-docker compose -f docker-compose.prod.yml ps
+docker compose ps
 ```
 
 **Backup antes de actualizar**: Antes de cada deploy, ejecuta `make backup-db` para crear un backup de la base de datos en `backups/`.
@@ -170,10 +168,10 @@ docker compose -f docker-compose.prod.yml ps
 
 ## 🏗️ Servicios Incluidos
 
-Este docker-compose despliega los siguientes servicios:
+El `docker-compose.yml` despliega los siguientes servicios:
 
 ### 🔌 Backend API
-- **Imagen**: `cmd69/expensivo-backend:1.1.0`
+- **Imagen**: `cmd69/expensivo-backend:latest`
 - **Puerto**: 8008 (configurable)
 - **Tecnología**: FastAPI (Python)
 - **Características**:
@@ -183,7 +181,7 @@ Este docker-compose despliega los siguientes servicios:
   - ✅ Documentación automática (Swagger/OpenAPI)
 
 ### 🎨 Frontend
-- **Imagen**: `cmd69/expensivo-frontend:1.1.0`
+- **Imagen**: `cmd69/expensivo-frontend:latest`
 - **Puerto**: 3030 (configurable)
 - **Tecnología**: Next.js (React/TypeScript)
 - **Características**:
@@ -244,7 +242,6 @@ Para permitir acceso desde otros dominios:
 ```env
 CORS_ORIGINS=http://localhost:3030,https://tudominio.com
 ```
-
 
 ---
 

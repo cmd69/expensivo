@@ -1,11 +1,10 @@
 # ============================================================================
-# Makefile - Expensivo (repo público de producción)
+# Makefile - Expensivo
 # ============================================================================
-# Comandos compatibles con el repo privado. Usa docker-compose.prod.yml.
-# Servicios: postgres, backend, frontend, redis (mismos nombres que el privado).
+# Servicios: postgres, backend, frontend, redis
 # ============================================================================
 
-COMPOSE_FILE ?= docker-compose.prod.yml
+COMPOSE_FILE ?= docker-compose.yml
 
 .PHONY: help backup-db migrate up down restart logs logs-backend logs-db shell-backend shell-db deploy
 
@@ -38,7 +37,7 @@ backup-restore: ## Restaurar backup (simple, sin migración de ownership)
 	@if [ -z "$(BACKUP_PATH)" ]; then \
 		echo "❌ Error: Debes proporcionar BACKUP_PATH"; \
 		echo "Uso: make backup-restore BACKUP_PATH=<ruta/al/backup.dump>"; \
-		echo "Ejemplo: make backup-restore BACKUP_PATH=backups/expense_db_manual_20251214_175850.dump"; \
+		echo "Ejemplo: make backup-restore BACKUP_PATH=backups/expensivo_db_20251214_175850.dump"; \
 		exit 1; \
 	fi; \
 	./scripts/backup_and_restore.sh $(BACKUP_PATH)
@@ -47,7 +46,7 @@ backup-restore-migrate: ## Restaurar backup y migrar ownership de usuario antigu
 	@if [ -z "$(BACKUP_PATH)" ]; then \
 		echo "❌ Error: Debes proporcionar BACKUP_PATH"; \
 		echo "Uso: make backup-restore-migrate BACKUP_PATH=<ruta/al/backup.dump>"; \
-		echo "Ejemplo: make backup-restore-migrate BACKUP_PATH=backups/expense_db_manual_20251214_175850.dump"; \
+		echo "Ejemplo: make backup-restore-migrate BACKUP_PATH=backups/expensivo_db_20251214_175850.dump"; \
 		exit 1; \
 	fi; \
 	./scripts/backup_and_restore_with_migration.sh $(BACKUP_PATH)
