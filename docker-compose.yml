@@ -32,7 +32,7 @@ services:
 
   # Backend API (FastAPI) - Imagen desde Docker Hub (actualizada por CI/CD)
   backend:
-    image: cmd69/expensivo-backend:latest
+    image: cmd69/expensivo-backend:1edaffa
     container_name: expensivo_backend
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-expensivo_user}:${POSTGRES_PASSWORD:-expensivo_password}@postgres:5432/${POSTGRES_DB:-expensivo_db}
@@ -89,7 +89,7 @@ services:
 
   # Frontend (Next.js) - Imagen desde Docker Hub (actualizada por CI/CD)
   frontend:
-    image: cmd69/expensivo-frontend:latest
+    image: cmd69/expensivo-frontend:1edaffa
     container_name: expensivo_frontend
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
