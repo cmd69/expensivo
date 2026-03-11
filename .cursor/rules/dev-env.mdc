@@ -1,0 +1,36 @@
+---
+description: Entorno de producción — expensivo (imágenes de registry)
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Entorno — expensivo (PRODUCCIÓN)
+
+Este repo es la **instancia de producción**. Usa imágenes pre-construidas de DockerHub.
+
+**Para desarrollo, usar `~/homelab/docker/expensivo-dev/`.**
+
+## Comandos en contenedor
+
+Todos los comandos se ejecutan **dentro del contenedor**:
+
+```bash
+docker compose exec backend <cmd>
+docker compose exec backend alembic upgrade head
+docker compose exec backend bash
+```
+
+**NUNCA ejecutar `python3`, `pip install`, `npm` u otros comandos directamente en el host.**
+
+## Convención de commits
+
+Formato obligatorio:
+
+```
+[NN] TYPE(scope): descripción breve
+```
+
+- `[NN]` secuencial por repo (último: `[06]`, siguiente: `[07]`)
+- Tipos: `FEAT` `FIX` `DOCS` `REFACTOR` `CHORE` `TEST` `CI` `INFRA` `STYLE`
+- Scope en minúsculas: `(compose)`, `(scripts)`, `(config)`
+- Descripción en imperativo: "añadir", "corregir", "actualizar"
