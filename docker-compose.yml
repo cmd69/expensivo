@@ -7,7 +7,7 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: expensivo_postgres
+    container_name: expensivo-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-expensivo_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-expensivo_password}
@@ -24,12 +24,12 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - expensivo_network
+      - expensivo-network
     restart: unless-stopped
 
   backend:
     image: cmd69/expensivo-backend:latest
-    container_name: expensivo_backend
+    container_name: expensivo-backend
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-expensivo_user}:${POSTGRES_PASSWORD:-expensivo_password}@postgres:5432/${POSTGRES_DB:-expensivo_db}
       POSTGRES_HOST: postgres
@@ -62,12 +62,12 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - expensivo_network
+      - expensivo-network
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
-    container_name: expensivo_redis
+    container_name: expensivo-redis
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
@@ -79,12 +79,12 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - expensivo_network
+      - expensivo-network
     restart: unless-stopped
 
   frontend:
     image: cmd69/expensivo-frontend:latest
-    container_name: expensivo_frontend
+    container_name: expensivo-frontend
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
       NODE_ENV: ${NODE_ENV:-production}
@@ -93,7 +93,7 @@ services:
     depends_on:
       - backend
     networks:
-      - expensivo_network
+      - expensivo-network
     restart: unless-stopped
 
 volumes:
@@ -105,5 +105,5 @@ volumes:
     driver: local
 
 networks:
-  expensivo_network:
+  expensivo-network:
     driver: bridge
