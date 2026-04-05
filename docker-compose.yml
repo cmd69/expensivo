@@ -48,6 +48,10 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       ADMIN_TELEGRAM_CHAT_ID: ${ADMIN_TELEGRAM_CHAT_ID:-}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      # Tricount (deben coincidir con .env; si no se pasan aquí, el backend ve TRICOUNT_ENABLED=false)
+      TRICOUNT_ENABLED: ${TRICOUNT_ENABLED:-false}
+      TRICOUNT_AUTO_SYNC: ${TRICOUNT_AUTO_SYNC:-false}
+      TRICOUNT_SYNC_INTERVAL_DAYS: ${TRICOUNT_SYNC_INTERVAL_DAYS:-5}
     volumes:
       - backend_data:/app/data
     ports:
